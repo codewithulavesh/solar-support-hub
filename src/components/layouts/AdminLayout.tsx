@@ -1,9 +1,10 @@
 import { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Sun,
   Ticket,
@@ -14,15 +15,24 @@ import {
   Database,
   BarChart3,
   Settings,
+  LogOut,
   Menu,
+  User,
+  ChevronDown,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 interface NavItem {
   icon: ReactNode;
   label: string;
   href: string;
+  children?: NavItem[];
 }
 
 const adminNavItems: NavItem[] = [
@@ -36,19 +46,20 @@ const adminNavItems: NavItem[] = [
   { icon: <Settings className="w-5 h-5" />, label: 'Settings', href: '/admin/settings' },
 ];
 
-// Mock admin data
-const mockAdmin = {
-  full_name: 'Admin User',
-  email: 'admin@selco.in',
-};
-
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   const NavContent = () => (
     <div className="flex flex-col h-full bg-card">
@@ -69,13 +80,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <div className="p-4 border-b">
         <div className="flex items-center gap-3">
           <Avatar className="w-10 h-10">
+            <AvatarImage src={profile?.avatar_url || undefined} />
             <AvatarFallback className="bg-primary/10 text-primary">
-              {mockAdmin.full_name.charAt(0)}
+              {profile?.full_name?.charAt(0) || <User className="w-5 h-5" />}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-foreground truncate text-sm">{mockAdmin.full_name}</p>
-            <p className="text-xs text-muted-foreground truncate">{mockAdmin.email}</p>
+            <p className="font-medium text-foreground truncate text-sm">{profile?.full_name || 'Admin'}</p>
+            <p className="text-xs text-muted-foreground truncate">{profile?.email || 'admin@selco.in'}</p>
           </div>
         </div>
       </div>
@@ -107,11 +119,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </nav>
       </ScrollArea>
 
-      {/* Footer */}
+      {/* Sign out */}
       <div className="p-4 border-t">
-        <p className="text-xs text-muted-foreground text-center">
-          © 2024 SELCO Foundation
-        </p>
+        <Button
+          variant="ghost"
+          onClick={handleSignOut}
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+        >
+          <LogOut className="w-5 h-5" />
+          Sign Out
+        </Button>
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 import { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Sun,
   AlertCircle,
@@ -13,7 +14,9 @@ import {
   Bell,
   Globe,
   HelpCircle,
+  LogOut,
   Menu,
+  X,
   User,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -23,7 +26,7 @@ interface NavItem {
   icon: ReactNode;
   label: string;
   href: string;
-  emoji: string;
+  emoji?: string;
 }
 
 const endUserNavItems: NavItem[] = [
@@ -36,19 +39,20 @@ const endUserNavItems: NavItem[] = [
   { icon: <HelpCircle className="w-6 h-6" />, label: 'Help & Info', href: '/help', emoji: 'ℹ️' },
 ];
 
-// Mock user data
-const mockUser = {
-  full_name: 'Ramesh Kumar',
-  phone: '+91 98765 43210',
-};
-
 interface EndUserLayoutProps {
   children: ReactNode;
 }
 
 export default function EndUserLayout({ children }: EndUserLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
@@ -69,13 +73,14 @@ export default function EndUserLayout({ children }: EndUserLayoutProps) {
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <Avatar className="w-12 h-12 border-2 border-white/30">
+            <AvatarImage src={profile?.avatar_url || undefined} />
             <AvatarFallback className="bg-white/20 text-white text-lg">
-              {mockUser.full_name.charAt(0)}
+              {profile?.full_name?.charAt(0) || <User className="w-6 h-6" />}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-white truncate">{mockUser.full_name}</p>
-            <p className="text-xs text-white/70 truncate">{mockUser.phone}</p>
+            <p className="font-medium text-white truncate">{profile?.full_name || 'User'}</p>
+            <p className="text-xs text-white/70 truncate">{profile?.phone || 'No phone'}</p>
           </div>
         </div>
       </div>
@@ -107,11 +112,16 @@ export default function EndUserLayout({ children }: EndUserLayoutProps) {
         </nav>
       </ScrollArea>
 
-      {/* Footer */}
+      {/* Sign out */}
       <div className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-white/50 text-center">
-          © 2024 SELCO Foundation
-        </p>
+        <Button
+          variant="ghost"
+          onClick={handleSignOut}
+          className="w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-sidebar-accent py-4 text-lg"
+        >
+          <LogOut className="w-6 h-6" />
+          Sign Out
+        </Button>
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 import { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
   Sun,
@@ -17,7 +18,9 @@ import {
   Bell,
   Settings,
   BookOpen,
+  LogOut,
   Menu,
+  User,
   Circle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -27,7 +30,7 @@ interface NavItem {
   icon: ReactNode;
   label: string;
   href: string;
-  emoji: string;
+  emoji?: string;
 }
 
 const technicianNavItems: NavItem[] = [
@@ -43,26 +46,26 @@ const technicianNavItems: NavItem[] = [
   { icon: <BookOpen className="w-6 h-6" />, label: 'Knowledge Base', href: '/technician/knowledge', emoji: '📚' },
 ];
 
-// Mock technician data
-const mockTechnician = {
-  full_name: 'Lakshmi Devi',
-  status: 'online' as const,
-  is_women_led: true,
-  average_rating: 4.8,
-  total_jobs_completed: 127,
-};
-
 interface TechnicianLayoutProps {
   children: ReactNode;
 }
 
 export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { profile, technician, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
   const getStatusColor = () => {
-    switch (mockTechnician.status) {
+    switch (technician?.status) {
       case 'online': return 'bg-success';
+      case 'busy': return 'bg-warning';
+      case 'on_leave': return 'bg-info';
       default: return 'bg-muted-foreground';
     }
   };
@@ -87,19 +90,20 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
         <div className="flex items-center gap-3">
           <div className="relative">
             <Avatar className="w-12 h-12 border-2 border-white/30">
+              <AvatarImage src={profile?.avatar_url || undefined} />
               <AvatarFallback className="bg-white/20 text-white text-lg">
-                {mockTechnician.full_name.charAt(0)}
+                {profile?.full_name?.charAt(0) || <User className="w-6 h-6" />}
               </AvatarFallback>
             </Avatar>
-            <Circle className={cn('absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-sidebar fill-current', getStatusColor())} />
+            <Circle className={cn('absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-sidebar', getStatusColor())} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-white truncate">{mockTechnician.full_name}</p>
+            <p className="font-medium text-white truncate">{profile?.full_name || 'Technician'}</p>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-xs capitalize">
-                {mockTechnician.status}
+                {technician?.status || 'offline'}
               </Badge>
-              {mockTechnician.is_women_led && (
+              {technician?.is_women_led && (
                 <Badge className="bg-pink-500/20 text-pink-200 text-xs">
                   Women-led
                 </Badge>
@@ -114,12 +118,12 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
             <p className="text-xs text-white/70">Rating</p>
             <p className="font-bold text-white flex items-center justify-center gap-1">
               <Star className="w-3 h-3 fill-accent text-accent" />
-              {mockTechnician.average_rating.toFixed(1)}
+              {technician?.average_rating?.toFixed(1) || '0.0'}
             </p>
           </div>
           <div className="bg-white/10 rounded-lg p-2 text-center">
             <p className="text-xs text-white/70">Jobs</p>
-            <p className="font-bold text-white">{mockTechnician.total_jobs_completed}</p>
+            <p className="font-bold text-white">{technician?.total_jobs_completed || 0}</p>
           </div>
         </div>
       </div>
@@ -151,11 +155,16 @@ export default function TechnicianLayout({ children }: TechnicianLayoutProps) {
         </nav>
       </ScrollArea>
 
-      {/* Footer */}
+      {/* Sign out */}
       <div className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-white/50 text-center">
-          © 2024 SELCO Foundation
-        </p>
+        <Button
+          variant="ghost"
+          onClick={handleSignOut}
+          className="w-full justify-start gap-3 text-white/80 hover:text-white hover:bg-sidebar-accent py-4"
+        >
+          <LogOut className="w-5 h-5" />
+          Sign Out
+        </Button>
       </div>
     </div>
   );
