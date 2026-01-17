@@ -3,10 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 // Pages
-import AuthPage from "./pages/Auth";
 import EndUserDashboard from "./pages/end-user/Dashboard";
 import TechnicianDashboard from "./pages/technician/Dashboard";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -17,192 +15,95 @@ import EndUserLayout from "./components/layouts/EndUserLayout";
 import TechnicianLayout from "./components/layouts/TechnicianLayout";
 import AdminLayout from "./components/layouts/AdminLayout";
 
-import { Loader2 } from "lucide-react";
-
 const queryClient = new QueryClient();
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-  
-  return <>{children}</>;
-}
-
-function RoleBasedRedirect() {
-  const { role, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
-  switch (role) {
-    case 'admin':
-    case 'coordinator':
-      return <Navigate to="/admin/tickets" replace />;
-    case 'technician':
-      return <Navigate to="/technician/jobs" replace />;
-    default:
-      return <Navigate to="/report-issue" replace />;
-  }
-}
 
 function AppRoutes() {
   return (
     <Routes>
-      {/* Auth */}
-      <Route path="/auth" element={<AuthPage />} />
-      
-      {/* Role-based redirect */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <RoleBasedRedirect />
-        </ProtectedRoute>
-      } />
+      {/* Default redirect to end user */}
+      <Route path="/" element={<Navigate to="/report-issue" replace />} />
       
       {/* End User Routes */}
       <Route path="/report-issue" element={
-        <ProtectedRoute>
-          <EndUserLayout><EndUserDashboard page="report" /></EndUserLayout>
-        </ProtectedRoute>
+        <EndUserLayout><EndUserDashboard page="report" /></EndUserLayout>
       } />
       <Route path="/service-status" element={
-        <ProtectedRoute>
-          <EndUserLayout><EndUserDashboard page="status" /></EndUserLayout>
-        </ProtectedRoute>
+        <EndUserLayout><EndUserDashboard page="status" /></EndUserLayout>
       } />
       <Route path="/my-system" element={
-        <ProtectedRoute>
-          <EndUserLayout><EndUserDashboard page="system" /></EndUserLayout>
-        </ProtectedRoute>
+        <EndUserLayout><EndUserDashboard page="system" /></EndUserLayout>
       } />
       <Route path="/call-help" element={
-        <ProtectedRoute>
-          <EndUserLayout><EndUserDashboard page="call" /></EndUserLayout>
-        </ProtectedRoute>
+        <EndUserLayout><EndUserDashboard page="call" /></EndUserLayout>
       } />
       <Route path="/notifications" element={
-        <ProtectedRoute>
-          <EndUserLayout><EndUserDashboard page="notifications" /></EndUserLayout>
-        </ProtectedRoute>
+        <EndUserLayout><EndUserDashboard page="notifications" /></EndUserLayout>
       } />
       <Route path="/language" element={
-        <ProtectedRoute>
-          <EndUserLayout><EndUserDashboard page="language" /></EndUserLayout>
-        </ProtectedRoute>
+        <EndUserLayout><EndUserDashboard page="language" /></EndUserLayout>
       } />
       <Route path="/help" element={
-        <ProtectedRoute>
-          <EndUserLayout><EndUserDashboard page="help" /></EndUserLayout>
-        </ProtectedRoute>
+        <EndUserLayout><EndUserDashboard page="help" /></EndUserLayout>
       } />
       
       {/* Technician Routes */}
+      <Route path="/technician" element={<Navigate to="/technician/jobs" replace />} />
       <Route path="/technician/jobs" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="jobs" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="jobs" /></TechnicianLayout>
       } />
       <Route path="/technician/active-job" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="active" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="active" /></TechnicianLayout>
       } />
       <Route path="/technician/complete-job" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="complete" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="complete" /></TechnicianLayout>
       } />
       <Route path="/technician/completed" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="completed" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="completed" /></TechnicianLayout>
       } />
       <Route path="/technician/earnings" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="earnings" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="earnings" /></TechnicianLayout>
       } />
       <Route path="/technician/rating" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="rating" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="rating" /></TechnicianLayout>
       } />
       <Route path="/technician/training" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="training" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="training" /></TechnicianLayout>
       } />
       <Route path="/technician/notifications" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="notifications" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="notifications" /></TechnicianLayout>
       } />
       <Route path="/technician/profile" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="profile" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="profile" /></TechnicianLayout>
       } />
       <Route path="/technician/knowledge" element={
-        <ProtectedRoute>
-          <TechnicianLayout><TechnicianDashboard page="knowledge" /></TechnicianLayout>
-        </ProtectedRoute>
+        <TechnicianLayout><TechnicianDashboard page="knowledge" /></TechnicianLayout>
       } />
       
       {/* Admin Routes */}
+      <Route path="/admin" element={<Navigate to="/admin/tickets" replace />} />
       <Route path="/admin/tickets" element={
-        <ProtectedRoute>
-          <AdminLayout><AdminDashboard page="tickets" /></AdminLayout>
-        </ProtectedRoute>
+        <AdminLayout><AdminDashboard page="tickets" /></AdminLayout>
       } />
       <Route path="/admin/map" element={
-        <ProtectedRoute>
-          <AdminLayout><AdminDashboard page="map" /></AdminLayout>
-        </ProtectedRoute>
+        <AdminLayout><AdminDashboard page="map" /></AdminLayout>
       } />
       <Route path="/admin/technicians" element={
-        <ProtectedRoute>
-          <AdminLayout><AdminDashboard page="technicians" /></AdminLayout>
-        </ProtectedRoute>
+        <AdminLayout><AdminDashboard page="technicians" /></AdminLayout>
       } />
       <Route path="/admin/assignments" element={
-        <ProtectedRoute>
-          <AdminLayout><AdminDashboard page="assignments" /></AdminLayout>
-        </ProtectedRoute>
+        <AdminLayout><AdminDashboard page="assignments" /></AdminLayout>
       } />
       <Route path="/admin/sla" element={
-        <ProtectedRoute>
-          <AdminLayout><AdminDashboard page="sla" /></AdminLayout>
-        </ProtectedRoute>
+        <AdminLayout><AdminDashboard page="sla" /></AdminLayout>
       } />
       <Route path="/admin/systems" element={
-        <ProtectedRoute>
-          <AdminLayout><AdminDashboard page="systems" /></AdminLayout>
-        </ProtectedRoute>
+        <AdminLayout><AdminDashboard page="systems" /></AdminLayout>
       } />
       <Route path="/admin/reports" element={
-        <ProtectedRoute>
-          <AdminLayout><AdminDashboard page="reports" /></AdminLayout>
-        </ProtectedRoute>
+        <AdminLayout><AdminDashboard page="reports" /></AdminLayout>
       } />
       <Route path="/admin/settings" element={
-        <ProtectedRoute>
-          <AdminLayout><AdminDashboard page="settings" /></AdminLayout>
-        </ProtectedRoute>
+        <AdminLayout><AdminDashboard page="settings" /></AdminLayout>
       } />
       
       <Route path="*" element={<NotFound />} />
@@ -216,9 +117,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
+        <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
