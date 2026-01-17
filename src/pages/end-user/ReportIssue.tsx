@@ -1,29 +1,36 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Lightbulb, Battery, Sun, Zap, AlertTriangle, HelpCircle, 
-  Camera, Mic, MapPin, Loader2, CheckCircle 
-} from 'lucide-react';
+import { Loader2, CheckCircle, Mic, MapPin, Camera } from 'lucide-react';
 import { ISSUE_CATEGORY_LABELS, type IssueCategory, type TicketPriority } from '@/types/database';
 
 const quickIssues = [
-  { category: 'no_light' as IssueCategory, icon: Lightbulb, label: 'Light Not Working', emoji: '💡' },
-  { category: 'battery_problem' as IssueCategory, icon: Battery, label: 'Battery Issue', emoji: '🔋' },
-  { category: 'panel_damage' as IssueCategory, icon: Sun, label: 'Panel Damaged', emoji: '☀️' },
+  { category: 'no_light' as IssueCategory, label: 'Light Not Working', emoji: '💡' },
+  { category: 'battery_problem' as IssueCategory, label: 'Battery Issue', emoji: '🔋' },
+  { category: 'panel_damage' as IssueCategory, label: 'Panel Damaged', emoji: '☀️' },
 ];
 
+// Generate mock ticket number
+const generateTicketNumber = () => {
+  const prefix = 'TKT';
+  const date = new Date();
+  const dateStr = date.toISOString().slice(2, 10).replace(/-/g, '');
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `${prefix}-${dateStr}-${random}`;
+};
+
 export default function ReportIssue() {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [ticketNumber, setTicketNumber] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [hasVoiceNote, setHasVoiceNote] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [location, setLocation] = useState<{lat: number; lng: number} | null>(null);
   
   const [issueCategory, setIssueCategory] = useState<IssueCategory | ''>('');
   const [priority, setPriority] = useState<TicketPriority>('normal');
@@ -34,37 +41,20 @@ export default function ReportIssue() {
   };
 
   const submitTicket = async (category: IssueCategory, ticketPriority: TicketPriority, desc: string) => {
-    if (!user) return;
-    
     setIsSubmitting(true);
     
-    const { data, error } = await supabase
-      .from('tickets')
-      .insert({
-        customer_id: user.id,
-        issue_category: category,
-        priority: ticketPriority,
-        issue_description: desc,
-      })
-      .select('ticket_number')
-      .single();
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
+    const newTicketNumber = generateTicketNumber();
+    setTicketNumber(newTicketNumber);
+    setSubmitted(true);
     setIsSubmitting(false);
     
-    if (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to submit service request. Please try again.',
-        variant: 'destructive',
-      });
-    } else {
-      setTicketNumber(data.ticket_number);
-      setSubmitted(true);
-      toast({
-        title: 'Request Submitted!',
-        description: `Ticket ${data.ticket_number} created successfully.`,
-      });
-    }
+    toast({
+      title: 'Request Submitted!',
+      description: `Ticket ${newTicketNumber} created successfully.`,
+    });
   };
 
   const handleFormSubmit = async () => {
@@ -84,6 +74,49 @@ export default function ReportIssue() {
     setIssueCategory('');
     setPriority('normal');
     setDescription('');
+    setHasVoiceNote(false);
+    setPhotos([]);
+    setLocation(null);
+  };
+
+  const handleVoiceRecord = () => {
+    if (isRecording) {
+      setIsRecording(false);
+      setHasVoiceNote(true);
+      toast({ title: 'Voice note recorded', description: '30 seconds recorded' });
+    } else {
+      setIsRecording(true);
+      toast({ title: 'Recording...', description: 'Tap again to stop' });
+      // Auto stop after 30 seconds
+      setTimeout(() => {
+        setIsRecording(false);
+        setHasVoiceNote(true);
+      }, 30000);
+    }
+  };
+
+  const handlePhotoCapture = () => {
+    if (photos.length < 3) {
+      const newPhoto = `photo_${Date.now()}`;
+      setPhotos([...photos, newPhoto]);
+      toast({ title: 'Photo added', description: `${photos.length + 1}/3 photos` });
+    } else {
+      toast({ title: 'Maximum photos reached', description: 'You can add up to 3 photos', variant: 'destructive' });
+    }
+  };
+
+  const handleGetLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+          toast({ title: 'Location captured', description: 'Your location has been added' });
+        },
+        () => {
+          toast({ title: 'Location error', description: 'Could not get your location', variant: 'destructive' });
+        }
+      );
+    }
   };
 
   if (submitted) {
@@ -184,6 +217,37 @@ export default function ReportIssue() {
               onChange={(e) => setDescription(e.target.value)}
               className="min-h-[100px] text-base"
             />
+          </div>
+
+          {/* Media Attachments */}
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              type="button"
+              variant={isRecording ? "destructive" : hasVoiceNote ? "secondary" : "outline"}
+              className="h-14 flex flex-col gap-1"
+              onClick={handleVoiceRecord}
+            >
+              <Mic className={`w-5 h-5 ${isRecording ? 'animate-pulse' : ''}`} />
+              <span className="text-xs">{isRecording ? 'Stop' : hasVoiceNote ? 'Recorded ✓' : 'Voice'}</span>
+            </Button>
+            <Button
+              type="button"
+              variant={photos.length > 0 ? "secondary" : "outline"}
+              className="h-14 flex flex-col gap-1"
+              onClick={handlePhotoCapture}
+            >
+              <Camera className="w-5 h-5" />
+              <span className="text-xs">{photos.length > 0 ? `${photos.length}/3 Photos` : 'Photo'}</span>
+            </Button>
+            <Button
+              type="button"
+              variant={location ? "secondary" : "outline"}
+              className="h-14 flex flex-col gap-1"
+              onClick={handleGetLocation}
+            >
+              <MapPin className="w-5 h-5" />
+              <span className="text-xs">{location ? 'Located ✓' : 'Location'}</span>
+            </Button>
           </div>
 
           <Button 
